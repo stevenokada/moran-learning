@@ -13,16 +13,61 @@ from pymongo import MongoClient
 from collections import Counter
 
 
+
+
+
+def string_to_graph(s_input):
+
+	def convert_arg(arg):
+		try:
+			arg = int(arg)
+
+		except ValueError:
+			arg = float(arg)
+
+		return arg
+
+
+	args = s_input.split('-')	
+
+	constructor_name = args[0]
+
+	if len(args) == 1:
+		# builtin with no arguments
+		return getattr(nx, constructor_name)()
+
+	if len(args) == 2:
+		# builtin with *args
+		params = args[1].split('_')
+		params = map(convert_arg, params)
+
+		return getattr(nx, constructor_name)(*params)
+
+	if len(args) == 3:
+		params = args[1].split('_')
+		params = map(convert_arg, params)
+
+		seed = args[2].split('=')[1]
+		seed = int(seed)
+		return getattr(nx, constructor_name)(*params, seed=seed)
+
+
+
 class OverstepError(Exception):
 	pass
 
+class GraphDisconnectedError(Exception):
+	pass
+
 class MoranSimulation():
-	def __init__(self, datapath, fitness_val, fitness_dist = 'uniform'):
+	def __init__(self, datapath, fitness_val, graph_type = 'data', fitness_dist = 'uniform'):
 		"""datapath is pandas df without header and without edge weights
 
 		fitness_dist == fitness distrubtion
 		fitness_val = fitness of one mutant
 		"""
+
+		# MUST ONLY DEAL WITH CONNECTED GRAPH
 
 
 		self.datapath = datapath
@@ -31,26 +76,33 @@ class MoranSimulation():
 		self.fitness_val = fitness_val
 
 
-		# unfiorm fitness except for mutant
+
+		# if graph_type == 'data':
+		# 	df = pd.read_csv(self.datapath, sep = ' ',header = None)
+		# 	edgelist = df.values.tolist()
+		# 	self.graph = nx.Graph(edgelist)
+
+		if graph_type == 'builtin':
+
+			self.graph = nx.convert_node_labels_to_integers(string_to_graph(datapath))
+
+			if not nx.is_connected(self.graph):
+				raise GraphDisconnectedError()
+
+
+
+		self.graph = nx.relabel_nodes(self.graph, lambda x: (x,1))
+
 		if fitness_dist == 'uniform':
-			# each node is (label, fitness) tuple
-
-			df = pd.read_csv(self.datapath, sep = ' ',header = None)
-			edgelist = df.values.tolist()
-
-			self.graph = nx.Graph(edgelist)
-
-			self.graph = nx.relabel_nodes(self.graph, lambda x: (x,1))
-
-
-			# get node and update node
 
 			replace_index = np.random.randint(1, high=nx.number_of_nodes(self.graph))
 
-			print(replace_index, fitness_val)
-			self.graph = nx.relabel_nodes(self.graph, {(replace_index,1): (replace_index, fitness_val)}, copy=False)
 
-			self.pos = nx.spring_layout(self.graph)
+		self.graph = nx.relabel_nodes(self.graph, {(replace_index,1): (replace_index, fitness_val)}, copy=False)
+		self.pos = nx.spring_layout(self.graph)
+
+		self.number_of_nodes = len(self.graph.nodes())
+		self.number_of_edges = len(self.graph.edges())
 
 
 
@@ -156,6 +208,7 @@ class MoranSimulation():
 
 		self.time_step += 1
 
+
 		to_reproduce = self.select(self.graph.nodes())
 		to_replace = self.select_neighbor(to_reproduce)
 		self.replace_node(to_replace, to_reproduce)
@@ -197,8 +250,6 @@ class MoranSimulation():
 		neighbors = list(nx.all_neighbors(self.graph, node))
 
 
-		# assuming no edge weights, if we do edge weights, we should select 
-
 		selected_index = np.random.choice(len(neighbors))
 
 		return neighbors[selected_index]
@@ -226,21 +277,35 @@ class MoranSimulation():
 
 
 
-def aggregate_run(datapath, fitness_val,  number_of_runs, fitness_dist = 'uniform'):
+def aggregate_run(datapath, fitness_val,  graph_type, number_of_runs, fitness_dist = 'uniform'):
 
 	successes = []
 	for i in range(number_of_runs):
-		msim = MoranSimulation(datapath, fitness_val, fitness_dist=fitness_dist)
+		msim = MoranSimulation(datapath, fitness_val, graph_type = graph_type, fitness_dist=fitness_dist)
 		status, termination_time = msim.run()
+
+		number_of_nodes = msim.number_of_nodes
+		number_of_edges = msim.number_of_edges
 
 		if status == 'fixation':
 			successes.append(termination_time)
 
 
+
+
 	p_success = len(successes)/number_of_runs
+
 	f_time = np.mean(successes)
 
-	return p_success, f_time
+	p_r = (1-1/fitness_val)/(1-(1/fitness_val)**number_of_nodes)
+
+	if p_success < p_r:
+		classification = 'S'
+
+	if p_success >= p_r: 
+		classification = 'A'
+
+	return p_success, f_time, classification, number_of_nodes, number_of_edges
 
 
 
