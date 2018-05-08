@@ -191,7 +191,7 @@ class MoranSimulation():
 		self.termination_time = self.time_step
 		self.graph = nx.freeze(self.graph)
 
-		print("%s achieved at %d" % (self.status, self.time_step))
+		# print("%s achieved at %d" % (self.status, self.time_step))
 
 
 
