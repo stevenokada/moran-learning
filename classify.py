@@ -38,7 +38,7 @@ def load_data(fitness_val = 5):
 	# returns feature matrix, output matrix tuple
 
 	client = MongoClient(MONGO_URI)
-	col = client['moran']['data']
+	col = client['moran']['DATAF5_FINAL']
 
 	feature_mat = []
 	target_mat = []
@@ -90,6 +90,22 @@ def select_target_val(Y, arg='classification'):
 	return Y_new
 
 
+def predict_on_graph_name(model, graph_name):
+	client = MongoClient(MONGO_URI)
+	col = client['moran']['DATAF5_FINAL']
+
+	graph = col.find_one({'graph_name':graph_name})
+
+	graph = np.array(graph)
+
+	res = model.predict(graph)
+
+	res = 'A' if res==[0,1] else 'S'
+
+	return res
+
+
+
 # [['A'], ['B']
 
 if __name__ == '__main__':
@@ -105,6 +121,7 @@ if __name__ == '__main__':
 
 	Y = select_target_val(Y, arg=task)
 	# Y = ['A','S','S',..]
+
 	Y = map(lambda x: 0 if x == 'S' else 1, Y)
 	Y = to_categorical(Y)
 
@@ -117,21 +134,29 @@ if __name__ == '__main__':
 	X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.33, random_state=42)
 
 
-
-
+	# 380 A, 260 S, 60% A, 40% S
+	# A -> 1 -> [0,1]
 
 
 
 	inputs = Input(shape=(dimensions, ))
 
-	x = Dense(64, activation='relu')(inputs)
-	x = Dense(16, activation='relu')(x)
-
+	x = Dense(10, activation='relu')(inputs)
+	x = Dense(10, activation='relu')(x)
 	predictions = Dense(2, activation='softmax')(x)
+
 
 	model = Model(inputs=inputs, outputs=predictions)
 	model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
 	model.fit(X_train, Y_train, epochs = 300)
+	loss_and_metrics = model.evaluate(X_test, Y_test)
+	print(loss_and_metrics)
+
+
+	#map(lambda x: 'A' if x[0] > x[1] else 'S', model.predict(X_train)).count("A")
+
+	res_train = zip(model.predict(X_train), Y_train)
+	res_test = zip(model.predict(X_test),Y_test)
 
 
 

@@ -2,7 +2,7 @@ from __future__ import division
 import subprocess
 import glob
 import simulate_moran as smoran
-import distributed_gen_training
+import distributed_gen_target
 import numpy as np
 import jsonschema
 from pymongo import MongoClient
@@ -22,7 +22,7 @@ MONGO_URI = "mongodb://skokada:12345@ds115350.mlab.com:15350/moran"
 
 NUMBER_OF_THREADS = 5
 
-builtins = distributed_gen_training.get_builtins()
+builtins = distributed_gen_target.get_builtins()
 dimensions = '128'
 
 # non distributed version
