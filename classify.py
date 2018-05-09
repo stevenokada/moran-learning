@@ -3,13 +3,15 @@ from __future__ import division
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
+from sklearn.decomposition import PCA
 from keras.layers import Dense, Input
 from keras.models import Model
 from keras.utils import to_categorical
+from mpl_toolkits.mplot3d import Axes3D
 
 
 
-
+import matplotlib.pyplot as plt
 import subprocess
 import glob
 import simulate_moran as smoran
@@ -96,13 +98,40 @@ def predict_on_graph_name(model, graph_name):
 
 	graph = col.find_one({'graph_name':graph_name})
 
-	graph = np.array(graph)
+	graph = np.array(graph['feature_vec'])
 
-	res = model.predict(graph)
+	res = model.predict(np.reshape(graph, (128,)))
 
 	res = 'A' if res==[0,1] else 'S'
 
 	return res
+
+def visualize(X_scaled, Y):
+
+	pca = PCA(n_components=3)
+	X_pca = pca.fit_transform(X_scaled)
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	for i, x in enumerate(X_pca):
+		print(Y[i])
+		if np.array_equal(Y[i],[0,1]):
+			c = 'b'
+
+		if np.array_equal(Y[i],[1,0]):
+			c = 'r'
+
+
+		ax.scatter(x[0], x[1], x[2], c=c)
+
+	plt.show()
+
+
+
+
+	
+
 
 
 
@@ -113,7 +142,7 @@ if __name__ == '__main__':
 	# might want to normalize feature vectors
 
 	dimensions = 128
-	task = 'classification'
+	task = 'p_success'
 
 
 	X, Y = load_data(fitness_val=5)
@@ -122,8 +151,8 @@ if __name__ == '__main__':
 	Y = select_target_val(Y, arg=task)
 	# Y = ['A','S','S',..]
 
-	Y = map(lambda x: 0 if x == 'S' else 1, Y)
-	Y = to_categorical(Y)
+	# Y = map(lambda x: 0 if x == 'S' else 1, Y)
+	# Y = to_categorical(Y)
 
 
 	# X = map(lambda x: [x for x in range(128)], X)
@@ -131,23 +160,27 @@ if __name__ == '__main__':
 
 	X_scaled = preprocessing.scale(X)
 
-	X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.33, random_state=42)
+	X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.1, random_state=42)
 
 
-	# 380 A, 260 S, 60% A, 40% S
-	# A -> 1 -> [0,1]
+	# # 380 A, 260 S, 60% A, 40% S
+	# # A -> 1 -> [0,1]
 
 
 
 	inputs = Input(shape=(dimensions, ))
 
-	x = Dense(10, activation='relu')(inputs)
-	x = Dense(10, activation='relu')(x)
-	predictions = Dense(2, activation='softmax')(x)
+	x = Dense(3, activation='relu')(inputs)
+	# x = Dense(2, activation='relu')(x)
+	predictions = Dense(1, activation='linear')(x)
+	# predictions = Dense(2, activation='softmax')(inputs)
+
 
 
 	model = Model(inputs=inputs, outputs=predictions)
-	model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
+	# model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
+	model.compile(optimizer='sgd', loss='mean_squared_error', metrics=['accuracy'])
+
 	model.fit(X_train, Y_train, epochs = 300)
 	loss_and_metrics = model.evaluate(X_test, Y_test)
 	print(loss_and_metrics)
@@ -159,6 +192,5 @@ if __name__ == '__main__':
 	res_test = zip(model.predict(X_test),Y_test)
 
 
-
-
+	
 

@@ -3,6 +3,9 @@ from pymongo import MongoClient
 import simulate_moran as smoran
 import datetime
 import jsonschema
+import csv
+import numpy as np
+import pandas as pd
 
 
 FITNESS = 5
@@ -199,12 +202,10 @@ def simulate(q_lock, q, c_lock, counter):
 	print("%s starting to generate data" % current_process().name)
 	client = MongoClient(MONGO_URI)
 	db = client['moran']
-	collection = db['data']
+	collection = db['F' + str(FITNESS) + '_noemb']
 
 	try:
 		
-
-
 		while not q.empty():
 
 			with q_lock:
@@ -213,7 +214,7 @@ def simulate(q_lock, q, c_lock, counter):
 
 
 			try: 
-			
+
 
 				p_success, f_time, classification, number_of_nodes, number_of_edges = smoran.aggregate_run(graph_name, FITNESS, 'builtin', NUMBER_OF_RUNS)
 
@@ -249,9 +250,41 @@ def simulate(q_lock, q, c_lock, counter):
 		client.close()
 
 
+def mongo_to_csv_target():
+	client = MongoClient(MONGO_URI)
+	db = client['moran']
+	collection = db['DATAF' + str(FITNESS) + '_FINAL']
+
+	builtins = get_builtins()
+
+
+	listofdicts = []
+	counter = 0
+	for obj in collection.find():
+
+
+		target_vec = obj['target_vec']
+		target_vec['graph_name'] = obj['graph_name']
+		counter += 1
+
+		# new_target_vec = {}
+		# for k,v in target_vec.items():
+		# 	new_target_vec[k] = [v]
+
+		listofdicts.append(target_vec)
+
+
+
+
+	print(counter)
+	df = pd.DataFrame(listofdicts)
+	df.to_csv('data/F%stargets.csv'%str(FITNESS), sep=' ')
+
+
 
 
 if __name__ == '__main__':
+	pass
 	q = Queue()
 	c = Value('i', 0)
 	q_lock = Lock()
@@ -285,17 +318,9 @@ if __name__ == '__main__':
 
 	print("Done!")
 
-# 50 threads -> 55s
-# 20 threads -> 1m3s/56s/51s
-# 10 threads -> 54s/52s/55s
-# 8 threads -> 1m13s/1m13s
-# 5 threads -> 40s/1m5s/1m5s/1m
-# 4 threads -> 50s/1m
-# 3 threads -> 1m4s
-# 2 threads -> 1m13s
-# 1 thread -> 1m30s
-# ordinary -> 1m3s
 
+
+		
 
 
 

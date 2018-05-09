@@ -23,7 +23,7 @@ MONGO_URI = "mongodb://skokada:12345@ds115350.mlab.com:15350/moran"
 NUMBER_OF_THREADS = 5
 
 builtins = distributed_gen_target.get_builtins()
-dimensions = '128'
+dimensions = '28'
 
 # non distributed version
 
@@ -193,7 +193,7 @@ def thread_embed(q_lock, q, v_lock, v):
 def thread_upload(q_lock, q, v_lock, v):
 	client = MongoClient(MONGO_URI)
 	db = client['moran']
-	col = db['data_test']
+	col = db['embeddings']
 
 	while not q.empty():
 		with q_lock:
@@ -244,18 +244,18 @@ if __name__ == '__main__':
 
 	v = Value('i', 0)
 	v_lock = Lock()
-	# for graph_name in builtins:
-	# 	q.put(graph_name)
+	for graph_name in builtins:
+		q.put(graph_name)
 
-	# processes = [Process(name="thread %s"%x, target = thread_embed, args = (q_lock, q, v_lock, v)) for x in range(NUMBER_OF_THREADS)]
+	processes = [Process(name="thread %s"%x, target = thread_embed, args = (q_lock, q, v_lock, v)) for x in range(NUMBER_OF_THREADS)]
 
-	# for process in processes:
-	# 	process.start()
+	for process in processes:
+		process.start()
 
-	# while not q.empty():
-	# 	pass
+	while not q.empty():
+		pass
 
-	# print("Done with embedding!")
+	print("Done with embedding!")
 
 
 
