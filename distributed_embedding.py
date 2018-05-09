@@ -22,7 +22,7 @@ MONGO_URI = "mongodb://skokada:12345@ds115350.mlab.com:15350/moran"
 
 NUMBER_OF_THREADS = 5
 
-builtins = distributed_gen_target.get_builtins()
+builtins = smoran.get_connected_builtins()
 dimensions = '28'
 
 # non distributed version

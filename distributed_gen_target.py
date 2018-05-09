@@ -290,7 +290,7 @@ if __name__ == '__main__':
 	q_lock = Lock()
 	c_lock = Lock()
 	
-	builtins = get_builtins()
+	builtins = smoran.get_connected_builtins()
 
 	for x in builtins:
 		q.put(x)

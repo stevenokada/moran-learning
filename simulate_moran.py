@@ -8,13 +8,18 @@ import matplotlib
 
 import matplotlib.pyplot as plt
 
-
+import distributed_gen_target as dgt
 from pymongo import MongoClient
 from collections import Counter
 
 
 
 
+class OverstepError(Exception):
+	pass
+
+class GraphDisconnectedError(Exception):
+	pass
 
 def string_to_graph(s_input):
 
@@ -52,12 +57,25 @@ def string_to_graph(s_input):
 		return getattr(nx, constructor_name)(*params, seed=seed)
 
 
+def get_connected_builtins():
+	connected_builtins = []
 
-class OverstepError(Exception):
-	pass
+	for graph in dgt.get_builtins():
+		try:
+			if not nx.is_connected(string_to_graph(graph)):
+				raise GraphDisconnectedError()
 
-class GraphDisconnectedError(Exception):
-	pass
+			connected_builtins.append(graph)
+
+		except GraphDisconnectedError:
+			print("%s is disconnected"%graph)
+
+	return connected_builtins
+
+
+
+
+
 
 class MoranSimulation():
 	def __init__(self, datapath, fitness_val, graph_type = 'data', fitness_dist = 'uniform'):
@@ -306,75 +324,6 @@ def aggregate_run(datapath, fitness_val,  graph_type, number_of_runs, fitness_di
 		classification = 'A'
 
 	return p_success, f_time, classification, number_of_nodes, number_of_edges
-
-
-
-
-
-
-
-
-
-
-
-
-# moransim = MoranSimulation('data/karate/karate.edgelist', 5)
-# moransim.run(visualize=True)
-
-# if __name__ == '__main__':
-# 	parser = argparse.ArgumentParser()
-
-# 	parser.add_argument("--input", help="datapath to input csv file")
-# 	parser.add_argument("--output", help="datapath to output csv file")
-# 	parser.add_argument("--fitness", nargs='+')
-# 	parser.add_argument("--number_of_runs", )
-
-
-# 	args = parser.parse_args()
-
-# 	i_datapath = args.input 
-# 	o_datapath = args.output
-
-
-# 	results = []
-
-# 	for i in args.fitness:
-# 		i = float(i)
-
-# 		sub_results = []
-
-
-# 		for j in range(int(args.number_of_runs)):
-
-# 			print("Run number %d for %s " % (j+1, i_datapath))
-# 			msim = MoranSimulation(i_datapath, i)
-
-# 			sub_results.append(msim.run())
-
-
-# 		# results contains (status, time)
-
-# 		# calculate prob of success and average time of success
-
-# 		successes = list(filter(lambda x: x[0] == 'fixation', sub_results))
-
-# 		p_success = len(successes)/len(sub_results)
-
-# 		mean_f_time = np.mean(list(map(lambda x: x[1], successes)))
-
-# 		results.append((i, p_success, mean_f_time))
-
-
-
-# 	print(results)
-
-
-
-	#write bash script to run for every file 
-	# we need graph_f vec
-	# open o_datapath (all files should use results.csv)
-	# lookup rep_vector ofassociated with i_datapath
-	# write row to o_datapath with (i_datapath, rep_vector, p_success @ f=1.1, mean_f_time @ f=1.1, p_success @ f= 1.2, ...)
 
 
 
