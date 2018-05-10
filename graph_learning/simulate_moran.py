@@ -15,11 +15,6 @@ from collections import Counter
 
 
 
-class OverstepError(Exception):
-	pass
-
-class GraphDisconnectedError(Exception):
-	pass
 
 def string_to_graph(s_input):
 
@@ -60,7 +55,7 @@ def string_to_graph(s_input):
 def get_connected_builtins():
 	connected_builtins = []
 
-	for graph in dgt.get_builtins():
+	for graph in dgt.get_builtins_small():
 		try:
 			if not nx.is_connected(string_to_graph(graph)):
 				raise GraphDisconnectedError()

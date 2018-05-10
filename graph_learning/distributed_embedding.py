@@ -49,7 +49,7 @@ def generate_embeddings():
 
 			nx.write_edgelist(g, I_DATAPATH + csv_filename, data=False)
 
-			command = ['python', 'node2vec/src/main.py', '--input', I_DATAPATH + csv_filename,
+			command = ['python', '../node2vec/src/main.py', '--input', I_DATAPATH + csv_filename,
 						'--output', N_DATAPATH + node_emb_filename, '--dimensions', dimensions]
 			subprocess.call(command)
 
@@ -145,7 +145,7 @@ def thread_embed(q_lock, q, v_lock, v):
 
 			node_emb = N_DATAPATH + node_emb_filename
 
-			command = ['python', 'node2vec/src/main.py', '--input', I_DATAPATH + csv_filename,
+			command = ['python', '../node2vec/src/main.py', '--input', I_DATAPATH + csv_filename,
 						'--output', node_emb, '--dimensions', dimensions]
 			subprocess.call(command)
 

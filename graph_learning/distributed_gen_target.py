@@ -109,23 +109,107 @@ schema = {"type": "object", "properties": {"number_of_nodes": {"type":"integer"}
 # 	finally:
 # 		client.close()
 
+# old builtins
+# def get_builtins(): 
+	# builtins = [
+	# 'balanced_tree-2_5',
+	# 	'barbell_graph-50_50',
+	# 	'complete_graph-100',
+	# 	'complete_multipartite_graph-25_25_25_25',
+	# 	'circular_ladder_graph-50',
+	# 	'cycle_graph-100',
+	# 	'dorogovtsev_goltsev_mendes_graph-5',
+	# 	'grid_2d_graph-10_10',
+	# 	'hypercube_graph-6',
+	# 	'ladder_graph-50',
+	# 	'lollipop_graph-50_50',
+	# 	'path_graph-100',
+	# 	'star_graph-100',
+	# 	'wheel_graph-100',
 
-def get_builtins(): 
+	# 	'bull_graph',
+	# 	'chvatal_graph',
+	# 	'desargues_graph',
+	# 	'diamond_graph',
+	# 	'dodecahedral_graph',
+	# 	'frucht_graph',
+	# 	'heawood_graph',
+	# 	'house_x_graph',
+	# 	'icosahedral_graph',
+	# 	'krackhardt_kite_graph',
+	# 	'moebius_kantor_graph',
+	# 	'octahedral_graph',
+	# 	'pappus_graph',
+	# 	'petersen_graph',
+	# 	'sedgewick_maze_graph',
+	# 	'tetrahedral_graph',
+	# 	'truncated_cube_graph',
+	# 	'truncated_tetrahedron_graph',
+	# 	'tutte_graph',
+	# 	'karate_club_graph',
+	# 	'davis_southern_women_graph',
+	# 	'florentine_families_graph',
+	# 	]
+
+
+	# def gen_rg_names(constructor_name, number_of_runs, *args):
+
+	# 	args = map(lambda x: str(x), args)
+	# 	result = []
+
+
+
+	# 	for x in range(number_of_runs):
+
+	# 		ans = constructor_name + '-' + '_'.join(args) + '-' + 'seed=' + str(x)
+
+	# 		result.append(ans)
+
+	# 	return result
+
+
+	# n = 100
+
+	# p_values = []
+	# p_values.append(1/(2*n)) #np < 1
+	# p_values.append(1/n) #np = 1
+	# p_values.append(2/n) #np > 1
+	# p_values.append(np.log(n)/(2*n)) #p < ln(n)/n
+	# p_values.append(np.log(n)/n)#p == ln(n)/n
+	# p_values.append(2*np.log(n)/n) #p > ln(n)/n
+
+	# random = []
+	# for p_val in p_values:
+	# 	random= random + gen_rg_names('erdos_renyi_graph', 50, 100, p_val)
+
+	# for p_val in p_values:
+	# 	for k in [0, 5, 20, 50, 75]:
+	# 		random = random + gen_rg_names('newman_watts_strogatz_graph', 10, 100, k, p_val)
+
+	# for m in [1, 2, 4, 8, 10]:
+	# 	random = random + gen_rg_names('barabasi_albert_graph', 60, 100, m)
+
+
+
+	# builtins = builtins + random
+
+	# return builtins
+def get_builtins_small():
 	builtins = [
-	'balanced_tree-2_5',
-		'barbell_graph-50_50',
-		'complete_graph-100',
-		'complete_multipartite_graph-25_25_25_25',
-		'circular_ladder_graph-50',
-		'cycle_graph-100',
-		'dorogovtsev_goltsev_mendes_graph-5',
-		'grid_2d_graph-10_10',
-		'hypercube_graph-6',
-		'ladder_graph-50',
-		'lollipop_graph-50_50',
-		'path_graph-100',
-		'star_graph-100',
-		'wheel_graph-100',
+	'balanced_tree-2_2', #7
+		'barbell_graph-3_3', #9
+		'complete_graph-10', #10
+		'complete_multipartite_graph-3_3_3', #9
+		'circular_ladder_graph-5',#10
+		'cycle_graph-10', #10
+		'dorogovtsev_goltsev_mendes_graph-5', #6
+		'grid_2d_graph-3_3', #9
+		'hypercube_graph-3', #8
+		'ladder_graph-5', #10
+		'lollipop_graph-5_5', #10
+		'path_graph-10', #10
+		'star_graph-9', #10
+		'wheel_graph-10', #10
 
 		'bull_graph',
 		'chvatal_graph',
@@ -168,26 +252,26 @@ def get_builtins():
 		return result
 
 
-	n = 100
+	n = 10
 
 	p_values = []
 	p_values.append(1/(2*n)) #np < 1
-	p_values.append(1/n) #np = 1
+	# p_values.append(1/n) #np = 1
 	p_values.append(2/n) #np > 1
 	p_values.append(np.log(n)/(2*n)) #p < ln(n)/n
-	p_values.append(np.log(n)/n)#p == ln(n)/n
+	# p_values.append(np.log(n)/n)#p == ln(n)/n
 	p_values.append(2*np.log(n)/n) #p > ln(n)/n
 
 	random = []
 	for p_val in p_values:
-		random= random + gen_rg_names('erdos_renyi_graph', 50, 100, p_val)
+		random= random + gen_rg_names('erdos_renyi_graph', 10,n,p_val)
 
 	for p_val in p_values:
-		for k in [0, 5, 20, 50, 75]:
-			random = random + gen_rg_names('newman_watts_strogatz_graph', 10, 100, k, p_val)
+		for k in [1,2,3]:
+			random = random + gen_rg_names('newman_watts_strogatz_graph', 3, n,k, p_val)
 
-	for m in [1, 2, 4, 8, 10]:
-		random = random + gen_rg_names('barabasi_albert_graph', 60, 100, m)
+	for m in [1]:
+		random = random + gen_rg_names('barabasi_albert_graph', 10,n, m)
 
 
 
@@ -255,7 +339,7 @@ def mongo_to_csv_target():
 	db = client['moran']
 	collection = db['DATAF' + str(FITNESS) + '_FINAL']
 
-	builtins = get_builtins()
+	builtins = get_builtins_small()
 
 
 	listofdicts = []
