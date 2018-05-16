@@ -168,28 +168,28 @@ if __name__ == '__main__':
 
 
 
-	inputs = Input(shape=(dimensions, ))
+	# inputs = Input(shape=(dimensions, ))
 
-	x = Dense(3, activation='relu')(inputs)
-	# x = Dense(2, activation='relu')(x)
-	predictions = Dense(1, activation='linear')(x)
-	# predictions = Dense(2, activation='softmax')(inputs)
-
-
-
-	model = Model(inputs=inputs, outputs=predictions)
-	# model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
-	model.compile(optimizer='sgd', loss='mean_squared_error', metrics=['accuracy'])
-
-	model.fit(X_train, Y_train, epochs = 300)
-	loss_and_metrics = model.evaluate(X_test, Y_test)
-	print(loss_and_metrics)
+	# x = Dense(3, activation='relu')(inputs)
+	# # x = Dense(2, activation='relu')(x)
+	# predictions = Dense(1, activation='linear')(x)
+	# # predictions = Dense(2, activation='softmax')(inputs)
 
 
-	#map(lambda x: 'A' if x[0] > x[1] else 'S', model.predict(X_train)).count("A")
 
-	res_train = zip(model.predict(X_train), Y_train)
-	res_test = zip(model.predict(X_test),Y_test)
+	# model = Model(inputs=inputs, outputs=predictions)
+	# # model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy'])
+	# model.compile(optimizer='sgd', loss='mean_squared_error', metrics=['accuracy'])
+
+	# model.fit(X_train, Y_train, epochs = 300)
+	# loss_and_metrics = model.evaluate(X_test, Y_test)
+	# print(loss_and_metrics)
+
+
+	# #map(lambda x: 'A' if x[0] > x[1] else 'S', model.predict(X_train)).count("A")
+
+	# res_train = zip(model.predict(X_train), Y_train)
+	# res_test = zip(model.predict(X_test),Y_test)
 
 
 	

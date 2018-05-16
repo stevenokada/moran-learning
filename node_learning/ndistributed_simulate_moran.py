@@ -4,13 +4,26 @@ import pandas as pd
 import numpy as np
 
 import argparse
-import matplotlib
-
 import matplotlib.pyplot as plt
-
-import distributed_gen_target as dgt
 from pymongo import MongoClient
 from collections import Counter
+
+
+import utils
+import subprocess
+import glob
+import numpy as np
+import jsonschema
+import pymongo
+import datetime
+import networkx as nx
+import pandas as pd
+import csv
+import multiprocessing as mp
+import time
+import ndistributed_simulate_moran as ndsmoran
+import pickle
+
 
 
 # thread_sim: moransim(graph).run_aggregate()
@@ -67,6 +80,7 @@ class MoranSimulation():
 
 
 		self.graph = nx.relabel_nodes(self.graph, {(replace_index,1): (replace_index, fitness_val)}, copy=False)
+		self.num_mutants =1
 		self.pos = nx.spring_layout(self.graph)
 
 		self.number_of_nodes = len(self.graph.nodes())
@@ -139,10 +153,18 @@ class MoranSimulation():
 
 
 
-	def run(self, max_step = float('inf'),visualize=False):
+	def run(self, max_step = float('inf'),visualize=False, early_stop=False):
 
 		while self.status == 'ongoing' and self.time_step <= max_step:
 			self.step()
+
+			if early_stop:
+
+				# threshold for 200 runs + 5000 nodes is 5 mutants, meaning it can't affect more than 1 run
+				if self.num_mutants > (self.number_of_nodes-self.num_mutants)/utils.FITNESS:
+					self.status = 'fixation'
+					# self.time_step = np.nan 
+					break
 
 			if visualize:
 
@@ -179,6 +201,8 @@ class MoranSimulation():
 
 		to_reproduce = self.select(self.graph.nodes())
 		to_replace = self.select_neighbor(to_reproduce)
+
+
 		self.replace_node(to_replace, to_reproduce)
 
 
@@ -226,8 +250,16 @@ class MoranSimulation():
 
 
 	def replace_node(self, old, new):
+		if old[1] ==1 and new[1] != 1:
+			self.num_mutants +=1
+
+		if old[1] != 1 and new[1] ==1:
+			self.num_mutants -=1
 
 		nx.relabel_nodes(self.graph, {old: (old[0], new[1])}, copy=False)
+
+
+
 
 	def update_status(self):
 		
@@ -288,12 +320,61 @@ class MoranNodeSimulation(MoranSimulation):
 		self.time_step = 0
 		self.fitness_val = fitness_val
 		self.number_of_runs = number_of_runs
+		self.number_of_nodes = len(self.graph.nodes())
 
 
 	def reset(self):
 		self.graph = nx.relabel_nodes(self.graph, lambda x: (x[0],1))
 		self.status = 'ongoing'
 		self.time_step = 0
+		self.num_mutants = 0
+
+	def single_node_run(self, node_index, early_stop=False):
+		# result = {str(node_index):{'p_success': None, 'f_time': None, 'classification': None}}
+		result = {}
+		node_target = {'p_success':0, 'f_time':0, 'classification':0}
+		node_successes = 0
+		node_f_times = []
+
+		replace_index = node_index
+
+		for run in range(self.number_of_runs):
+
+			# print("Node %s Trial %s" %(node, run))
+
+
+			self.graph = nx.relabel_nodes(self.graph, {(replace_index,1): (replace_index, self.fitness_val)}, copy=False)
+			self.num_mutants = 1
+
+
+			status, f_time = self.run(early_stop=early_stop)
+
+			if status == 'fixation':
+				node_successes += 1
+
+			node_f_times.append(f_time)
+
+			self.reset()
+
+
+
+
+		node_target['p_success'] = node_successes/self.number_of_runs
+		node_target['f_time'] = np.mean(node_f_times)
+
+		if node_target['p_success'] > utils.calculate_pr(self.fitness_val, self.graph.number_of_nodes()):
+			node_target['classification'] = 'A'
+
+		elif node_target['p_success'] < utils.calculate_pr(self.fitness_val, self.graph.number_of_nodes()):
+			node_target['classification'] = 'S'
+
+		else:
+			node_target['classification'] = 'I'
+
+
+
+		return node_target
+
 
 
 	def node_run(self):
@@ -311,8 +392,10 @@ class MoranNodeSimulation(MoranSimulation):
 
 			for run in range(self.number_of_runs):
 
+				# print("Node %s Trial %s" %(node, run))
 
-				self.graph = nx.relabel_nodes(self.graph, {(replace_index,1): (replace_index, fitness_val)}, copy=False)
+
+				self.graph = nx.relabel_nodes(self.graph, {(replace_index,1): (replace_index, self.fitness_val)}, copy=False)
 
 				status, f_time = self.run()
 
@@ -328,12 +411,20 @@ class MoranNodeSimulation(MoranSimulation):
 
 			node_target['p_success'] = node_successes/self.number_of_runs
 			node_target['f_time'] = np.mean(node_f_times)
-			node_target['classification'] = 'A' if node_target['p_success'] >= utils.calculate_pr(self.fitness_val, len(nodes)) else 'S'
+			if node_target['p_success'] > utils.calculate_pr(self.fitness_val, self.graph.number_of_nodes()):
+				node_target['classification'] = 'A'
+
+			elif node_target['p_success'] < utils.calculate_pr(self.fitness_val, self.graph.number_of_nodes()):
+				node_target['classification'] = 'S'
+
+			else:
+				node_target['classification'] = 'I'
 
 
 			results[str(replace_index)] = node_target
 
 		return results
+
 
 
 

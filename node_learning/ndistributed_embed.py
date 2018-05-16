@@ -37,7 +37,7 @@ def thread_embed(q_lock, q, v_lock, v):
 			node_emb_path = utils.N_DATAPATH + node_emb_filename
 
 			command = ['python2.7', '../node2vec/src/main.py', '--input', edgelist_path,
-						'--output', node_emb_path, '--dimensions', '128']
+						'--output', node_emb_path, '--dimensions', str(utils.REP_DIMENSIONS)]
 			subprocess.call(command)
 
 
@@ -76,7 +76,7 @@ def thread_sim_upload(q_lock, q, v_lock, v):
 
 
 		list_of_nodes = []
-		for node, target_vec in results:
+		for node, target_vec in results.items():
 			node_row = {"node": node, **target_vec}
 			list_of_nodes.append(node_row)
 
@@ -107,19 +107,17 @@ def thread_sim_upload(q_lock, q, v_lock, v):
 
 		
 
-		utils.NODE_DATA_FINAL.update_one({"graph_name": graph}, {"$set": {"node_vectors": node_vectors, "rep_dim": rep_dim, "num_nodes": num_nodes, 'num_edges': num_edges,
+		utils.NODE_DATA_FINAL.update_one({"graph_name": graph_name}, {"$set": {"node_vectors": node_vectors, "rep_dim": rep_dim, "num_nodes": num_nodes, 'num_edges': num_edges,
 			'f_val': utils.FITNESS, 'num_runs': utils.NUMBER_OF_RUNS, "adj_matrix": pickled_adj_mat}},upsert=True)
 
 		with v_lock:
 			v.value += 1
 
-		# print(graph, "is uploaded")
 		print("Graph %s is uploaded" % v.value)
 
 	print("%s finished" % mp.current_process().name)
 
 
-# node_data = [{'graph_name': graph_name, 'node_features': {'node1': [...],  ...}, 'node_targets': {'node1': {'p_success': ,'f_time': }, ...}, 'num_edges': ,'num_nodes': , 'num_runs': }]
 
 
 
@@ -145,6 +143,9 @@ if __name__ == '__main__':
 	while not q.empty():
 		pass
 
+	for process in processes:
+		process.join()
+
 	print("Done with embedding!")
 
 	time.sleep(10)
@@ -164,5 +165,8 @@ if __name__ == '__main__':
 
 	while not q.empty():
 		pass
+
+	for process in processes:
+		process.join()
 
 	print("Done with uploading!")
