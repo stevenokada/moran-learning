@@ -25,7 +25,7 @@ def thread_node_sim_upload_general(graph_name, q_lock, q, v_lock, v, return_dict
 
 		# result = {'p_success':, 'f_time', 'classification': }
 
-		result = ndsmoran.MoranNodeSimulation(graph_name, utils.FITNESS, utils.NUMBER_OF_RUNS).single_node_run(node_index, early_stop=True)
+		result = ndsmoran.MoranNodeSimulation(graph_name, utils.FITNESS, utils.NUMBER_OF_RUNS).single_node_run(node_index, early_stop=False)
 
 		with v_lock:
 			return_dict[str(node_index)] = result

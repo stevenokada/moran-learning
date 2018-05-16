@@ -15,8 +15,8 @@ import ndistributed_simulate_moran as ndsmoran
 import pickle
 
 
-FITNESS = 10
-NUMBER_OF_RUNS = 100
+FITNESS = 5
+NUMBER_OF_RUNS = 1000
 NUMBER_OF_THREADS = 5
 REP_DIMENSIONS = 128
 

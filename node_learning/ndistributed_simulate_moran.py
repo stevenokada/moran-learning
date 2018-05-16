@@ -161,7 +161,16 @@ class MoranSimulation():
 			if early_stop:
 
 				# threshold for 200 runs + 5000 nodes is 5 mutants, meaning it can't affect more than 1 run
-				if self.num_mutants > (self.number_of_nodes-self.num_mutants)/utils.FITNESS:
+
+				#21 seconds on 2
+				#26 seconds on 3
+				#32 seconds on 4, 10 runs
+				#49 seconds on 9
+				# 190 seconds no early stop 
+				ratio = 4
+				assert ratio < utils.FITNESS
+				if self.num_mutants*utils.FITNESS > ratio*(self.number_of_nodes-self.num_mutants):
+					print('hi')
 					self.status = 'fixation'
 					# self.time_step = np.nan 
 					break
